@@ -19,9 +19,10 @@ export const ProgressTracker: React.FC<ProgressTrackerProps> = ({
   completedStages
 }) => {
   return (
-    <div className="w-full max-w-2xl mx-auto mb-8 px-4">
-      <div className="neu-card p-4 sm:p-5 rounded-2xl">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+    <div className="w-full max-w-xl mx-auto mb-4 px-3 sm:px-4">
+      <div className="neu-card p-3 sm:p-4 rounded-2xl">
+        <div className="grid grid-cols-4 gap-2 sm:gap-3">
+
           {STAGES.map((stage) => {
             const completed = completedStages.find((c) => c.stage === stage.key);
 

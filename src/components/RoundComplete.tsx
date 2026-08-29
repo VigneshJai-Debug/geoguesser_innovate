@@ -1,13 +1,16 @@
 import React, { useEffect } from 'react';
 import { RoundData } from '../data/questions';
-import { Award, UserCheck } from 'lucide-react';
+import { Award, UserCheck, Home } from 'lucide-react';
+
 import confetti from 'canvas-confetti';
 
 interface RoundCompleteProps {
   roundData: RoundData;
+  onHome?: () => void;
 }
 
-export const RoundComplete: React.FC<RoundCompleteProps> = ({ roundData }) => {
+export const RoundComplete: React.FC<RoundCompleteProps> = ({ roundData, onHome }) => {
+
   useEffect(() => {
     // Soft celebration confetti
     try {
@@ -103,10 +106,10 @@ export const RoundComplete: React.FC<RoundCompleteProps> = ({ roundData }) => {
       </div>
 
       {/* External Progression Instructions */}
-      <div className="neu-pressed p-6 sm:p-8 rounded-3xl max-w-lg mx-auto bg-slate-100/90 border border-slate-300/40">
+      <div className="neu-pressed p-6 sm:p-8 rounded-3xl max-w-lg mx-auto bg-slate-100/90 border border-slate-300/40 mb-8">
         <div className="flex flex-col items-center gap-3">
           <div className="p-2.5 rounded-xl neu-flat text-slate-700">
-            <UserCheck className="w-6 h-6" />
+            <UserCheck className="w-6 h-6 stroke-[2]" />
           </div>
           <p className="text-base sm:text-lg font-bold text-slate-700 leading-relaxed">
             Please contact a Club Member<br />
@@ -114,7 +117,21 @@ export const RoundComplete: React.FC<RoundCompleteProps> = ({ roundData }) => {
           </p>
         </div>
       </div>
+
+      {/* Return to Home Screen Button */}
+      {onHome && (
+        <div className="flex justify-center">
+          <button
+            onClick={onHome}
+            className="neu-btn px-8 py-3.5 rounded-2xl text-sm font-black tracking-wider uppercase text-slate-800 flex items-center gap-2.5 cursor-pointer hover:text-emerald-700 active:scale-95 transition-all duration-200"
+          >
+            <Home className="w-4 h-4 stroke-[2.5]" />
+            <span>Back to Home</span>
+          </button>
+        </div>
+      )}
     </div>
   );
 };
+
 

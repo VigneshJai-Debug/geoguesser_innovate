@@ -52,18 +52,19 @@ export const GuessInput: React.FC<GuessInputProps> = ({
   };
 
   return (
-    <div className="w-full max-w-xl mx-auto px-4 mb-8">
-      <div className="neu-card p-6 sm:p-8 rounded-3xl text-center">
+    <div className="w-full max-w-xl mx-auto px-3 sm:px-4 mb-4">
+      <div className="neu-card p-4 sm:p-7 rounded-3xl text-center">
         {/* Stage Header */}
-        <div className="mb-2">
-          <span className="text-xs font-black tracking-widest text-slate-700 uppercase px-3.5 py-1.5 rounded-full neu-pressed inline-block">
+        <div className="mb-1">
+          <span className="text-[11px] sm:text-xs font-black tracking-widest text-slate-700 uppercase px-3 py-1 rounded-full neu-pressed inline-block">
             ROUND {roundNumber}
           </span>
         </div>
 
-        <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mt-3 mb-6">
+        <h2 className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight mt-2 mb-4">
           GUESS THE {stageLabel.toUpperCase()}
         </h2>
+
 
         {/* Temporary Correct Banner before moving */}
         {justCorrectName && (

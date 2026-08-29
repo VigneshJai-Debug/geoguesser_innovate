@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useGameState } from './game/gameState';
 import { StartScreen } from './components/StartScreen';
 import { ProgressTracker } from './components/ProgressTracker';
-import { ClueImageSection } from './components/ClueImage';
+import { ActiveClueImage, PreviousClues } from './components/ClueImage';
 import { GuessInput } from './components/GuessInput';
 import { RoundComplete } from './components/RoundComplete';
 import { Compass, AlertTriangle } from 'lucide-react';
@@ -20,6 +20,7 @@ export default function App() {
     justUnlocked,
     startNewGame,
     submitGuess,
+    resetToStart,
   } = useGameState();
 
   const [headerAlert, setHeaderAlert] = useState(false);
@@ -28,13 +29,15 @@ export default function App() {
     if (screen === 'PLAYING') {
       setHeaderAlert(true);
       setTimeout(() => setHeaderAlert(false), 3000);
+    } else if (screen === 'COMPLETE') {
+      resetToStart();
     }
   };
 
   return (
     <div className="min-h-screen bg-[#e6ebf0] text-slate-900 flex flex-col selection:bg-emerald-500 selection:text-white">
       {/* Top Header */}
-      <header className="w-full max-w-6xl mx-auto px-4 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <header className="w-full max-w-6xl mx-auto px-4 py-4 sm:py-6 flex flex-col sm:flex-row items-center justify-between gap-3">
         <div 
           className="flex items-center gap-3 cursor-pointer select-none" 
           onClick={handleHeaderClick}
@@ -66,27 +69,24 @@ export default function App() {
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col justify-center max-w-6xl w-full mx-auto pb-12">
+      <main className="flex-1 flex flex-col justify-center max-w-6xl w-full mx-auto pb-10">
         {screen === 'START' && (
           <StartScreen onStart={() => startNewGame()} />
         )}
 
         {screen === 'PLAYING' && (
           <div className="w-full flex flex-col items-center animate-fade-in">
-            {/* Progress Tracker */}
+            {/* 1. Progress Tracker */}
             <ProgressTracker
               currentStage={currentStage}
               completedStages={completedLevels.map(c => ({ stage: c.stage, name: c.level.name }))}
               roundData={currentRound}
             />
 
-            {/* Unlocked Images Gallery */}
-            <ClueImageSection
-              completedLevels={completedLevels}
-              justUnlocked={justUnlocked}
-            />
+            {/* 2. Active Stage Clue Image (Current target to identify) */}
+            <ActiveClueImage currentLevel={currentLevel} />
 
-            {/* Active Guess Input */}
+            {/* 3. Active Guess Input (Immediately below active image for phone ergonomics) */}
             <GuessInput
               roundNumber={currentRoundNumber}
               stageKey={currentStage}
@@ -96,20 +96,26 @@ export default function App() {
               wrongMessage={wrongMessage}
               justCorrectName={justUnlocked ? justUnlocked.name : null}
             />
+
+            {/* 4. Previously Identified Clues (Placed underneath guess box, collapsible) */}
+            <PreviousClues completedLevels={completedLevels} />
           </div>
         )}
 
         {screen === 'COMPLETE' && (
-          <RoundComplete roundData={currentRound} />
+          <RoundComplete roundData={currentRound} onHome={resetToStart} />
         )}
       </main>
 
+
+
       {/* Footer */}
-      <footer className="w-full py-4 text-center text-xs font-semibold text-slate-500">
-        Fully Static Geography Exploration • No Backend • No Tracking
+      <footer className="w-full py-4 text-center text-xs font-bold tracking-wider text-slate-600 uppercase">
+        PRODINNO VITC-Innovate To Escape
       </footer>
     </div>
   );
 }
+
 
 
