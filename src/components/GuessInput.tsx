@@ -56,21 +56,21 @@ export const GuessInput: React.FC<GuessInputProps> = ({
       <div className="neu-card p-6 sm:p-8 rounded-3xl text-center">
         {/* Stage Header */}
         <div className="mb-2">
-          <span className="text-xs font-bold tracking-widest text-slate-500 uppercase px-3 py-1 rounded-full neu-pressed inline-block">
+          <span className="text-xs font-black tracking-widest text-slate-700 uppercase px-3.5 py-1.5 rounded-full neu-pressed inline-block">
             ROUND {roundNumber}
           </span>
         </div>
 
-        <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-800 tracking-tight mt-3 mb-6">
+        <h2 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight mt-3 mb-6">
           GUESS THE {stageLabel.toUpperCase()}
         </h2>
 
         {/* Temporary Correct Banner before moving */}
         {justCorrectName && (
-          <div className="mb-6 p-4 rounded-2xl neu-pressed bg-emerald-500/10 border border-emerald-500/30 text-emerald-800 flex items-center justify-center gap-2 animate-bounce">
-            <Check className="w-5 h-5 text-emerald-600 font-bold" />
+          <div className="mb-6 p-4 rounded-2xl neu-pressed bg-emerald-500/10 border border-emerald-500/30 text-emerald-900 flex items-center justify-center gap-2 animate-bounce">
+            <Check className="w-5 h-5 text-emerald-600 font-extrabold stroke-[2.5]" />
             <span className="text-sm font-bold tracking-wide">
-              CORRECT — <span className="font-extrabold">{justCorrectName}</span>
+              CORRECT — <span className="font-black text-slate-900">{justCorrectName}</span>
             </span>
           </div>
         )}
@@ -84,17 +84,17 @@ export const GuessInput: React.FC<GuessInputProps> = ({
               value={inputVal}
               onChange={(e) => setInputVal(e.target.value)}
               placeholder={placeholder}
-              className="w-full text-center text-lg sm:text-xl font-semibold text-slate-800 placeholder-slate-400 py-4 px-6 rounded-2xl neu-inset focus:outline-none focus:ring-2 focus:ring-slate-400 transition-all bg-transparent"
+              className="w-full text-center text-lg sm:text-xl font-bold text-slate-900 placeholder-slate-500 py-4 px-6 rounded-2xl neu-inset focus:outline-none focus:ring-2 focus:ring-slate-500 transition-all bg-transparent"
               autoComplete="off"
               autoCorrect="off"
               spellCheck="false"
             />
           </div>
 
-          {/* Playful Wrong Message (inline, subtle) */}
+          {/* Playful Wrong Message (inline, high contrast) */}
           {wrongMessage && (
-            <div className="flex items-center justify-center gap-1.5 text-sm font-medium text-slate-600 py-1.5 px-3 rounded-xl neu-pressed bg-amber-50/50">
-              <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0" />
+            <div className="flex items-center justify-center gap-2 text-sm font-bold text-amber-900 py-2.5 px-4 rounded-xl neu-pressed bg-amber-50/80 border border-amber-300/60">
+              <AlertCircle className="w-4 h-4 text-amber-700 flex-shrink-0 stroke-[2.5]" />
               <span>{wrongMessage}</span>
             </div>
           )}
@@ -103,17 +103,18 @@ export const GuessInput: React.FC<GuessInputProps> = ({
             <button
               type="submit"
               disabled={!inputVal.trim()}
-              className={`neu-btn px-8 py-3.5 rounded-2xl text-base font-bold tracking-wider uppercase text-slate-800 flex items-center justify-center gap-2 cursor-pointer transition-all duration-200 ${
+              className={`neu-btn px-8 py-3.5 rounded-2xl text-base font-black tracking-wider uppercase text-slate-900 flex items-center justify-center gap-2 cursor-pointer transition-all duration-200 ${
                 !inputVal.trim()
                   ? 'opacity-40 cursor-not-allowed shadow-none'
                   : 'hover:text-emerald-700 active:scale-95'
               }`}
             >
               <span>SUBMIT</span>
-              <ArrowRight className="w-4 h-4" />
+              <ArrowRight className="w-4 h-4 stroke-[2.5]" />
             </button>
           </div>
         </form>
+
       </div>
     </div>
   );

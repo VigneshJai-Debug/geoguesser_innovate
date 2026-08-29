@@ -35,27 +35,28 @@ export const ProgressTracker: React.FC<ProgressTrackerProps> = ({
                 }`}
               >
                 <div className="flex items-center justify-between gap-1 mb-1">
-                  <span className="text-[11px] sm:text-xs font-bold tracking-wider text-slate-500 uppercase">
+                  <span className="text-[11px] sm:text-xs font-black tracking-wider text-slate-700 uppercase">
                     {stage.label}
                   </span>
                   {completed ? (
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0 stroke-[2.5]" />
                   ) : (
-                    <Circle className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+                    <Circle className="w-3.5 h-3.5 text-slate-500 flex-shrink-0 stroke-[2]" />
                   )}
                 </div>
 
                 <div className="min-h-[22px] flex items-center">
                   {completed ? (
-                    <span className="text-xs sm:text-sm font-semibold text-slate-800 truncate" title={completed.name}>
+                    <span className="text-xs sm:text-sm font-extrabold text-slate-900 truncate" title={completed.name}>
                       {completed.name}
                     </span>
                   ) : (
-                    <span className="text-xs text-slate-400 font-medium italic">
+                    <span className="text-xs text-slate-600 font-semibold italic">
                       Locked
                     </span>
                   )}
                 </div>
+
               </div>
             );
           })}

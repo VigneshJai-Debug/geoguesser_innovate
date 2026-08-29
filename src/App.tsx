@@ -1,11 +1,12 @@
-import { useGameState } from './game/gameState';
+import { useState } from 'react';
 
+import { useGameState } from './game/gameState';
 import { StartScreen } from './components/StartScreen';
 import { ProgressTracker } from './components/ProgressTracker';
 import { ClueImageSection } from './components/ClueImage';
 import { GuessInput } from './components/GuessInput';
 import { RoundComplete } from './components/RoundComplete';
-import { Compass, RotateCcw } from 'lucide-react';
+import { Compass, AlertTriangle } from 'lucide-react';
 
 export default function App() {
   const {
@@ -19,32 +20,48 @@ export default function App() {
     justUnlocked,
     startNewGame,
     submitGuess,
-    resetToStart,
   } = useGameState();
 
+  const [headerAlert, setHeaderAlert] = useState(false);
+
+  const handleHeaderClick = () => {
+    if (screen === 'PLAYING') {
+      setHeaderAlert(true);
+      setTimeout(() => setHeaderAlert(false), 3000);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-[#e6ebf0] text-slate-800 flex flex-col selection:bg-emerald-500 selection:text-white">
-      {/* Top Navigation / Header */}
-      <header className="w-full max-w-6xl mx-auto px-4 py-6 flex items-center justify-between">
-        <div className="flex items-center gap-3 cursor-pointer" onClick={resetToStart}>
-          <div className="w-10 h-10 rounded-2xl neu-flat flex items-center justify-center text-slate-700">
-            <Compass className="w-6 h-6 text-slate-700" />
+    <div className="min-h-screen bg-[#e6ebf0] text-slate-900 flex flex-col selection:bg-emerald-500 selection:text-white">
+      {/* Top Header */}
+      <header className="w-full max-w-6xl mx-auto px-4 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div 
+          className="flex items-center gap-3 cursor-pointer select-none" 
+          onClick={handleHeaderClick}
+        >
+          <div className="w-10 h-10 rounded-2xl neu-flat flex items-center justify-center text-slate-800">
+            <Compass className="w-6 h-6 text-slate-800" />
           </div>
           <div>
-            <h1 className="text-lg font-black tracking-tight text-slate-800">GEO QUEST</h1>
-            <p className="text-[11px] font-bold tracking-wider text-slate-500 uppercase">Soft UI Edition</p>
+            <h1 className="text-lg font-black tracking-tight text-slate-900">GEO QUEST</h1>
+            <p className="text-[11px] font-extrabold tracking-wider text-slate-600 uppercase">Soft UI Edition</p>
           </div>
         </div>
 
-        {screen !== 'START' && (
-          <button
-            onClick={resetToStart}
-            className="neu-btn px-4 py-2 rounded-xl text-xs font-bold tracking-wider uppercase text-slate-600 flex items-center gap-2 hover:text-slate-900 cursor-pointer"
-            title="Back to Home"
-          >
-            <RotateCcw className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Reset</span>
-          </button>
+        {/* In-game non-navigable indicator / warning */}
+        {screen === 'PLAYING' && (
+          <div className="flex items-center">
+            {headerAlert ? (
+              <div className="flex items-center gap-2 text-xs font-bold text-amber-800 px-4 py-2 rounded-xl neu-pressed bg-amber-100/80 animate-fade-in border border-amber-300">
+                <AlertTriangle className="w-4 h-4 text-amber-700 flex-shrink-0" />
+                <span>Cannot move back while round is going on. Complete the round!</span>
+              </div>
+            ) : (
+              <div className="neu-pressed px-3.5 py-1.5 rounded-full text-[11px] font-bold text-slate-600 uppercase tracking-wider">
+                Active Round in Progress
+              </div>
+            )}
+          </div>
         )}
       </header>
 
@@ -88,10 +105,11 @@ export default function App() {
       </main>
 
       {/* Footer */}
-      <footer className="w-full py-4 text-center text-xs font-medium text-slate-400">
+      <footer className="w-full py-4 text-center text-xs font-semibold text-slate-500">
         Fully Static Geography Exploration • No Backend • No Tracking
       </footer>
     </div>
   );
 }
+
 
