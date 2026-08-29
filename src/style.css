@@ -1,0 +1,70 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    background-color: #e6ebf0;
+    color: #1e293b;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+/* Soft UI / Neumorphic utility classes */
+.neu-flat {
+  background: #e6ebf0;
+  box-shadow: 6px 6px 14px #c2c8cf, -6px -6px 14px #ffffff;
+}
+
+.neu-raised {
+  background: #e6ebf0;
+  box-shadow: 8px 8px 18px #bcc2c9, -8px -8px 18px #ffffff;
+}
+
+.neu-card {
+  background: #e6ebf0;
+  box-shadow: 10px 10px 22px #bdc3cb, -10px -10px 22px #ffffff;
+}
+
+.neu-inset {
+  background: #e6ebf0;
+  box-shadow: inset 4px 4px 8px #c5cbcf, inset -4px -4px 8px #ffffff;
+}
+
+.neu-pressed {
+  background: #e0e5eb;
+  box-shadow: inset 3px 3px 6px #c5cbd2, inset -3px -3px 6px #ffffff;
+}
+
+.neu-btn {
+  background: #e6ebf0;
+  box-shadow: 6px 6px 14px #c0c6cd, -6px -6px 14px #ffffff;
+  transition: all 0.2s ease-in-out;
+}
+
+.neu-btn:hover {
+  box-shadow: 8px 8px 18px #b7bdc4, -8px -8px 18px #ffffff;
+}
+
+.neu-btn:active {
+  box-shadow: inset 4px 4px 8px #c2c8cf, inset -4px -4px 8px #ffffff;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+
+.animate-shake {
+  animation: shake 0.4s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
