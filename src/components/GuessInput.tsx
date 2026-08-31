@@ -56,22 +56,21 @@ export const GuessInput: React.FC<GuessInputProps> = ({
       <div className="neu-card p-4 sm:p-7 rounded-3xl text-center">
         {/* Stage Header */}
         <div className="mb-1">
-          <span className="text-[11px] sm:text-xs font-black tracking-widest text-slate-700 uppercase px-3 py-1 rounded-full neu-pressed inline-block">
+          <span className="text-[11px] sm:text-xs font-black tracking-widest text-rose-400 uppercase px-3.5 py-1 rounded-full neu-pressed inline-block border border-rose-500/20">
             ROUND {roundNumber}
           </span>
         </div>
 
-        <h2 className="text-xl sm:text-3xl font-black text-slate-900 tracking-tight mt-2 mb-4">
+        <h2 className="text-xl sm:text-3xl font-black text-white tracking-tight mt-2 mb-4 uppercase">
           GUESS THE {stageLabel.toUpperCase()}
         </h2>
 
-
         {/* Temporary Correct Banner before moving */}
         {justCorrectName && (
-          <div className="mb-6 p-4 rounded-2xl neu-pressed bg-emerald-500/10 border border-emerald-500/30 text-emerald-900 flex items-center justify-center gap-2 animate-bounce">
-            <Check className="w-5 h-5 text-emerald-600 font-extrabold stroke-[2.5]" />
+          <div className="mb-6 p-4 rounded-2xl neu-pressed bg-rose-950/40 border border-rose-500/40 text-rose-200 flex items-center justify-center gap-2 animate-bounce">
+            <Check className="w-5 h-5 text-rose-400 font-extrabold stroke-[2.5]" />
             <span className="text-sm font-bold tracking-wide">
-              CORRECT — <span className="font-black text-slate-900">{justCorrectName}</span>
+              CORRECT — <span className="font-black text-white">{justCorrectName}</span>
             </span>
           </div>
         )}
@@ -85,7 +84,7 @@ export const GuessInput: React.FC<GuessInputProps> = ({
               value={inputVal}
               onChange={(e) => setInputVal(e.target.value)}
               placeholder={placeholder}
-              className="w-full text-center text-lg sm:text-xl font-bold text-slate-900 placeholder-slate-500 py-4 px-6 rounded-2xl neu-inset focus:outline-none focus:ring-2 focus:ring-slate-500 transition-all bg-transparent"
+              className="w-full text-center text-lg sm:text-xl font-bold text-white placeholder-slate-500 py-4 px-6 rounded-2xl neu-inset focus:outline-none focus:ring-2 focus:ring-rose-500 transition-all bg-transparent"
               autoComplete="off"
               autoCorrect="off"
               spellCheck="false"
@@ -94,8 +93,8 @@ export const GuessInput: React.FC<GuessInputProps> = ({
 
           {/* Playful Wrong Message (inline, high contrast) */}
           {wrongMessage && (
-            <div className="flex items-center justify-center gap-2 text-sm font-bold text-amber-900 py-2.5 px-4 rounded-xl neu-pressed bg-amber-50/80 border border-amber-300/60">
-              <AlertCircle className="w-4 h-4 text-amber-700 flex-shrink-0 stroke-[2.5]" />
+            <div className="flex items-center justify-center gap-2 text-sm font-bold text-amber-300 py-2.5 px-4 rounded-xl neu-pressed bg-amber-950/40 border border-amber-500/40">
+              <AlertCircle className="w-4 h-4 text-amber-400 flex-shrink-0 stroke-[2.5]" />
               <span>{wrongMessage}</span>
             </div>
           )}
@@ -104,20 +103,18 @@ export const GuessInput: React.FC<GuessInputProps> = ({
             <button
               type="submit"
               disabled={!inputVal.trim()}
-              className={`neu-btn px-8 py-3.5 rounded-2xl text-base font-black tracking-wider uppercase text-slate-900 flex items-center justify-center gap-2 cursor-pointer transition-all duration-200 ${
+              className={`neu-btn px-10 py-3.5 rounded-2xl text-base font-black tracking-wider uppercase text-white flex items-center justify-center gap-2 cursor-pointer transition-all duration-200 ${
                 !inputVal.trim()
                   ? 'opacity-40 cursor-not-allowed shadow-none'
-                  : 'hover:text-emerald-700 active:scale-95'
+                  : 'hover:text-rose-400 hover:border-rose-500/40 active:scale-95'
               }`}
             >
-              <span>SUBMIT</span>
+              <span>SUBMIT GUESS</span>
               <ArrowRight className="w-4 h-4 stroke-[2.5]" />
             </button>
           </div>
         </form>
-
       </div>
     </div>
   );
 };
-

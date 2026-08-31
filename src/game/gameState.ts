@@ -1,4 +1,4 @@
-﻿import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { ROUNDS_DATA, RoundData, StageKey, GeographyLevel, PLAYFUL_WRONG_MESSAGES } from '../data/questions';
 import { validateGuess } from './validation';
 
@@ -9,13 +9,33 @@ export interface CompletedLevel {
   level: GeographyLevel;
 }
 
-export function useGameState() {
+interface UseGameStateOptions {
+  assignedQuestionId?: number | null;
+  onRoundComplete?: () => void;
+}
+
+export function useGameState(options?: UseGameStateOptions) {
+  const { assignedQuestionId, onRoundComplete } = options || {};
+
   const [screen, setScreen] = useState<GameScreenState>('START');
-  const [currentRoundIndex, setCurrentRoundIndex] = useState<number>(0);
+  const [currentRoundIndex, setCurrentRoundIndex] = useState<number>(() => {
+    if (typeof assignedQuestionId === 'number' && assignedQuestionId >= 1 && assignedQuestionId <= ROUNDS_DATA.length) {
+      return assignedQuestionId - 1;
+    }
+    return 0;
+  });
+
   const [currentStage, setCurrentStage] = useState<StageKey>('COUNTRY');
   const [completedLevels, setCompletedLevels] = useState<CompletedLevel[]>([]);
   const [wrongMessage, setWrongMessage] = useState<string | null>(null);
   const [justUnlocked, setJustUnlocked] = useState<GeographyLevel | null>(null);
+
+  // Sync assigned question if it updates from backend
+  useEffect(() => {
+    if (typeof assignedQuestionId === 'number' && assignedQuestionId >= 1 && assignedQuestionId <= ROUNDS_DATA.length) {
+      setCurrentRoundIndex(assignedQuestionId - 1);
+    }
+  }, [assignedQuestionId]);
 
   const currentRound: RoundData = ROUNDS_DATA[currentRoundIndex] || ROUNDS_DATA[0];
 
@@ -30,14 +50,7 @@ export function useGameState() {
 
   const currentLevel = getStageLevel(currentStage, currentRound);
 
-  const startNewGame = useCallback((roundNumber?: number) => {
-    let index: number;
-    if (typeof roundNumber === 'number' && roundNumber >= 1 && roundNumber <= ROUNDS_DATA.length) {
-      index = roundNumber - 1;
-    } else {
-      index = Math.floor(Math.random() * ROUNDS_DATA.length);
-    }
-    setCurrentRoundIndex(index);
+  const startNewGame = useCallback(() => {
     setCurrentStage('COUNTRY');
     setCompletedLevels([]);
     setWrongMessage(null);
@@ -65,6 +78,9 @@ export function useGameState() {
         setCurrentStage('CITY');
       } else if (currentStage === 'CITY') {
         setScreen('COMPLETE');
+        if (onRoundComplete) {
+          onRoundComplete();
+        }
       }
       return true;
     } else {
@@ -73,10 +89,11 @@ export function useGameState() {
       setWrongMessage(randomMsg);
       return false;
     }
-  }, [currentLevel, currentStage, completedLevels]);
+  }, [currentLevel, currentStage, completedLevels, onRoundComplete]);
 
   const resetToStart = useCallback(() => {
     setScreen('START');
+    setCurrentStage('COUNTRY');
     setCompletedLevels([]);
     setWrongMessage(null);
     setJustUnlocked(null);
@@ -84,6 +101,7 @@ export function useGameState() {
 
   return {
     screen,
+    setScreen,
     currentRound,
     currentRoundNumber: currentRound.id,
     currentStage,
@@ -93,6 +111,6 @@ export function useGameState() {
     justUnlocked,
     startNewGame,
     submitGuess,
-    resetToStart
+    resetToStart,
   };
 }

@@ -1,0 +1,128 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum EventStatus {
+  ACTIVE
+  COMPLETED
+  EXPIRED
+}
+
+enum VerificationStatus {
+  PENDING
+  VERIFIED
+  REJECTED
+}
+
+// ---------------------------------------------------------------------------
+// TeamSet — a group of up to 6 competing teams (enforced in UI, not DB)
+// ---------------------------------------------------------------------------
+
+model TeamSet {
+  id         String   @id @default(cuid())
+  name       String   @unique
+  leadTeamId String?  // Optional: ID of the "lead" or organiser-chosen team
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  teams Team[]
+}
+
+// ---------------------------------------------------------------------------
+// Team — one login per team (Team Lead credentials)
+// ---------------------------------------------------------------------------
+
+model Team {
+  id           String   @id @default(cuid())
+  teamName     String   @unique
+  passwordHash String
+  setId        String?  // Optional FK to TeamSet
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  set           TeamSet?        @relation(fields: [setId], references: [id])
+  members       TeamMember[]
+  eventProgress EventProgress[]
+}
+
+// ---------------------------------------------------------------------------
+// TeamMember — individual members; memberOrder = 1 is the Team Lead
+// ---------------------------------------------------------------------------
+
+model TeamMember {
+  id                 String   @id @default(cuid())
+  teamId             String
+  name               String
+  registrationNumber String
+  memberOrder        Int      // 1 = Team Lead
+  createdAt          DateTime @default(now())
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+}
+
+// ---------------------------------------------------------------------------
+// EventProgress — generic progress record for any event
+// Not every field is used by every event — that is intentional.
+// ---------------------------------------------------------------------------
+
+model EventProgress {
+  id          String      @id @default(cuid())
+  teamId      String
+  eventNumber Int
+
+  status      EventStatus @default(ACTIVE)
+
+  startedAt   DateTime    @default(now())
+  deadlineAt  DateTime    // always = startedAt + 30 min, set by server
+  submittedAt DateTime?
+  completedAt DateTime?
+
+  completionNumber Int?    // 1 = first to finish
+  correctCount     Int?    // used by multi-question events
+  totalQuestions   Int?    // used by multi-question events
+
+  score Float @default(0)
+
+  // Generic question assignment (e.g. Round 1 geography question id)
+  assignedQuestionId Int?
+
+  // Free-form submission storage
+  submissionText    String?
+  submissionBlobUrl String? // Vercel Blob URL for screenshot uploads
+
+  verificationStatus VerificationStatus @default(PENDING)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  team Team @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@unique([teamId, eventNumber])
+}
+
+// ---------------------------------------------------------------------------
+// GameState — single row (id = 1), controlled by organiser via Neon SQL
+//
+// To open an event:
+//   UPDATE "GameState" SET "activeEventNumber" = 1, "eventOpen" = true WHERE id = 1;
+//
+// To close submissions:
+//   UPDATE "GameState" SET "eventOpen" = false WHERE id = 1;
+// ---------------------------------------------------------------------------
+
+model GameState {
+  id                Int      @id @default(1)
+  activeEventNumber Int      @default(1)
+  eventOpen         Boolean  @default(true)
+  updatedAt         DateTime @updatedAt
+}

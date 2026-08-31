@@ -16,48 +16,53 @@ const STAGES: { key: StageKey; label: string }[] = [
 ];
 
 export const ProgressTracker: React.FC<ProgressTrackerProps> = ({
-  completedStages
+  completedStages,
 }) => {
   return (
     <div className="w-full max-w-xl mx-auto mb-4 px-3 sm:px-4">
       <div className="neu-card p-3 sm:p-4 rounded-2xl">
         <div className="grid grid-cols-4 gap-2 sm:gap-3">
-
           {STAGES.map((stage) => {
             const completed = completedStages.find((c) => c.stage === stage.key);
 
             return (
               <div
                 key={stage.key}
-                className={`flex flex-col p-3 rounded-xl transition-all duration-300 ${
+                className={`flex flex-col p-2.5 sm:p-3 rounded-xl transition-all duration-300 ${
                   completed
-                    ? 'neu-pressed bg-slate-100/80 border border-emerald-500/20'
-                    : 'neu-flat bg-slate-50/50 opacity-70'
+                    ? 'neu-pressed bg-rose-950/40 border border-rose-500/40 shadow-sm'
+                    : 'neu-flat bg-slate-900/40 opacity-60'
                 }`}
               >
                 <div className="flex items-center justify-between gap-1 mb-1">
-                  <span className="text-[11px] sm:text-xs font-black tracking-wider text-slate-700 uppercase">
+                  <span
+                    className={`text-[10px] sm:text-xs font-black tracking-wider uppercase ${
+                      completed ? 'text-rose-400' : 'text-slate-400'
+                    }`}
+                  >
                     {stage.label}
                   </span>
                   {completed ? (
-                    <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0 stroke-[2.5]" />
+                    <CheckCircle2 className="w-3.5 h-3.5 text-rose-500 flex-shrink-0 stroke-[2.5]" />
                   ) : (
-                    <Circle className="w-3.5 h-3.5 text-slate-500 flex-shrink-0 stroke-[2]" />
+                    <Circle className="w-3.5 h-3.5 text-slate-600 flex-shrink-0 stroke-[2]" />
                   )}
                 </div>
 
                 <div className="min-h-[22px] flex items-center">
                   {completed ? (
-                    <span className="text-xs sm:text-sm font-extrabold text-slate-900 truncate" title={completed.name}>
+                    <span
+                      className="text-xs sm:text-sm font-extrabold text-white truncate"
+                      title={completed.name}
+                    >
                       {completed.name}
                     </span>
                   ) : (
-                    <span className="text-xs text-slate-600 font-semibold italic">
+                    <span className="text-xs text-slate-500 font-semibold italic">
                       Locked
                     </span>
                   )}
                 </div>
-
               </div>
             );
           })}
@@ -66,4 +71,3 @@ export const ProgressTracker: React.FC<ProgressTrackerProps> = ({
     </div>
   );
 };
-

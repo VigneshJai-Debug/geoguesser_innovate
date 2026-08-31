@@ -12,18 +12,18 @@ export const ActiveClueImage: React.FC<ActiveClueImageProps> = ({ currentLevel }
 
   return (
     <div className="w-full max-w-xl mx-auto mb-5 px-3 sm:px-4">
-      <div className="neu-card p-3.5 sm:p-5 rounded-3xl transition-all duration-500 ring-2 ring-emerald-500/30">
+      <div className="neu-card p-3.5 sm:p-5 rounded-3xl transition-all duration-500 ring-1 ring-rose-500/40">
         <div className="flex items-center justify-between mb-2.5 px-1">
-          <span className="px-3 py-1 rounded-full neu-pressed text-[11px] sm:text-xs font-black text-slate-800 uppercase tracking-wider">
+          <span className="px-3 py-1 rounded-full neu-pressed text-[11px] sm:text-xs font-black text-rose-400 uppercase tracking-wider">
             {currentLevel.label} CLUE
           </span>
-          <span className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-bold text-emerald-800 neu-pressed px-2.5 py-1 rounded-full bg-emerald-50/60 border border-emerald-500/20">
-            <HelpCircle className="w-3.5 h-3.5 text-emerald-600 stroke-[2.5]" />
+          <span className="inline-flex items-center gap-1.5 text-[11px] sm:text-xs font-bold text-rose-300 neu-pressed px-2.5 py-1 rounded-full bg-rose-950/40 border border-rose-500/30">
+            <HelpCircle className="w-3.5 h-3.5 text-rose-400 stroke-[2.5]" />
             Identify this {currentLevel.label}
           </span>
         </div>
 
-        <div className="relative w-full overflow-hidden rounded-2xl neu-inset bg-slate-200/50 aspect-[4/3] sm:aspect-video max-h-[360px] flex items-center justify-center">
+        <div className="relative w-full overflow-hidden rounded-2xl neu-inset bg-black/40 aspect-[4/3] sm:aspect-video max-h-[360px] flex items-center justify-center border border-white/5">
           {!hasError ? (
             <img
               key={currentLevel.image}
@@ -36,10 +36,10 @@ export const ActiveClueImage: React.FC<ActiveClueImageProps> = ({ currentLevel }
               }`}
             />
           ) : (
-            <div className="flex flex-col items-center justify-center p-6 text-center text-slate-500">
-              <ImageOff className="w-8 h-8 mb-2 stroke-[1.5] text-slate-400" />
-              <p className="text-xs sm:text-sm font-bold text-slate-700">{currentLevel.label} Clue Image</p>
-              <p className="text-[11px] text-slate-400 mt-0.5 font-mono">{currentLevel.image}</p>
+            <div className="flex flex-col items-center justify-center p-6 text-center text-slate-400">
+              <ImageOff className="w-8 h-8 mb-2 stroke-[1.5] text-slate-500" />
+              <p className="text-xs sm:text-sm font-bold text-slate-300">{currentLevel.label} Clue Image</p>
+              <p className="text-[11px] text-slate-500 mt-0.5 font-mono">{currentLevel.image}</p>
             </div>
           )}
         </div>
@@ -67,32 +67,32 @@ export const PreviousClues: React.FC<PreviousCluesProps> = ({ completedLevels })
           className="w-full flex items-center justify-between py-1 px-1 cursor-pointer select-none text-left"
         >
           <div className="flex items-center gap-2">
-            <Eye className="w-4 h-4 text-slate-600 stroke-[2.5]" />
-            <span className="text-xs font-black tracking-widest text-slate-700 uppercase">
-              PREVIOUS CLUES ({completedLevels.length})
+            <Eye className="w-4 h-4 text-rose-500 stroke-[2.5]" />
+            <span className="text-xs font-black tracking-widest text-slate-300 uppercase">
+              DISCOVERED CLUES ({completedLevels.length})
             </span>
           </div>
-          <span className="text-xs font-bold text-slate-500 neu-pressed px-2.5 py-0.5 rounded-lg">
+          <span className="text-xs font-bold text-slate-400 neu-pressed px-2.5 py-0.5 rounded-lg">
             {open ? 'Hide' : 'Show'}
           </span>
         </button>
 
         {open && (
-          <div className="grid grid-cols-2 gap-3 mt-3 pt-3 border-t border-slate-200/60 animate-fade-in">
+          <div className="grid grid-cols-2 gap-3 mt-3 pt-3 border-t border-white/5 animate-fade-in">
             {completedLevels.map((item) => (
               <div
                 key={item.stage}
-                className="neu-flat p-2.5 rounded-2xl flex flex-col bg-slate-50/70"
+                className="neu-flat p-2.5 rounded-2xl flex flex-col bg-slate-900/60 border border-white/5"
               >
                 <div className="flex items-center justify-between mb-1.5 px-0.5">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                  <span className="text-[10px] font-bold text-rose-400 uppercase tracking-wider">
                     {item.level.label}
                   </span>
-                  <span className="text-[11px] font-extrabold text-slate-800 truncate max-w-[90px]" title={item.level.name}>
+                  <span className="text-[11px] font-extrabold text-white truncate max-w-[90px]" title={item.level.name}>
                     {item.level.name}
                   </span>
                 </div>
-                <div className="relative w-full aspect-video rounded-xl neu-inset overflow-hidden bg-slate-200/50">
+                <div className="relative w-full aspect-video rounded-xl neu-inset overflow-hidden bg-black/40">
                   <img
                     src={item.level.image}
                     alt={`${item.level.label}: ${item.level.name}`}
@@ -110,6 +110,3 @@ export const PreviousClues: React.FC<PreviousCluesProps> = ({ completedLevels })
     </div>
   );
 };
-
-
-
