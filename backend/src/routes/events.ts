@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import multer from 'multer';
 import { put } from '@vercel/blob';
+import { Prisma } from '@prisma/client';
 import { prisma } from '../db.js';
 import { requireAuth } from '../middleware/auth.js';
 import { EVENT_2_TOTAL_QUESTIONS, EVENT_3_ANSWERS } from '../constants/game.js';
@@ -38,7 +39,7 @@ eventsRouter.get('/state', async (req: Request, res: Response): Promise<void> =>
     });
 
     const now = Date.now();
-    const progressWithTimer = progresses.map((ep) => ({
+    const progressWithTimer = progresses.map((ep: typeof progresses[number]) => ({
       ...ep,
       timeRemainingMs:
         ep.status === 'ACTIVE'
@@ -46,7 +47,7 @@ eventsRouter.get('/state', async (req: Request, res: Response): Promise<void> =>
           : 0,
     }));
 
-    const totalScore = progresses.reduce((sum, ep) => sum + (ep.score ?? 0), 0);
+    const totalScore = progresses.reduce((sum: number, ep: typeof progresses[number]) => sum + (ep.score ?? 0), 0);
 
     res.json({
       activeEventNumber: gameState.activeEventNumber,
@@ -72,7 +73,7 @@ eventsRouter.post('/enter', async (req: Request, res: Response): Promise<void> =
 
     const eventNumber = gameState.activeEventNumber;
 
-    const progress = await prisma.$transaction(async (tx) => {
+    const progress = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       let assignedQuestionId: number | undefined;
 
       const existing = await tx.eventProgress.findUnique({
@@ -196,7 +197,7 @@ eventsRouter.post('/complete', async (req: Request, res: Response): Promise<void
       }
     }
 
-    const result = await prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const progress = await tx.eventProgress.findUnique({
         where: { teamId_eventNumber: { teamId, eventNumber } },
       });
@@ -205,17 +206,20 @@ eventsRouter.post('/complete', async (req: Request, res: Response): Promise<void
         throw new Error(`Event ${eventNumber} has not been started yet.`);
       }
 
-      const current = await expireIfPastDeadline(tx, progress);
-      if (current.status === 'EXPIRED') {
-        return { timedOut: true as const, progress: current };
+      // Re-fetch the full record after potential expire update to ensure we have eventNumber
+      const freshProgress = await tx.eventProgress.findUnique({
+        where: { id: progress.id },
+      });
+      if (!freshProgress) throw new Error('Progress record not found after expiry check.');
+      if (freshProgress.status === 'EXPIRED') {
+        return { timedOut: true as const, progress: freshProgress };
       }
 
-      const completeRes = await completeEvent(tx, current, extraData);
+      const completeRes = await completeEvent(tx, freshProgress, extraData);
 
       // Post-process score for Event 3 ratio, or verificationStatus for Event 1
       if ('completed' in completeRes) {
-        let finalScore = completeRes.score;
-        let verificationStatus = 'PENDING';
+        let finalScore: number = completeRes.score ?? 0;
 
         if (eventNumber === 3) {
           finalScore = finalScore * correctnessRatio;
@@ -223,7 +227,7 @@ eventsRouter.post('/complete', async (req: Request, res: Response): Promise<void
           finalScore = Math.round(finalScore * 10) / 10;
         }
 
-        const updateData: any = {};
+        const updateData: Record<string, unknown> = {};
         if (eventNumber === 1) updateData.verificationStatus = 'PENDING';
         if (eventNumber === 3) updateData.score = finalScore;
 
@@ -232,8 +236,8 @@ eventsRouter.post('/complete', async (req: Request, res: Response): Promise<void
             where: { id: progress.id },
             data: updateData
           });
-          completeRes.progress = updated;
-          completeRes.score = updated.score;
+          (completeRes as any).progress = updated;
+          (completeRes as any).score = updated.score;
         }
       }
 

@@ -15,22 +15,24 @@ import { TimerBadge } from './components/TimerBadge';
 import { useGameState } from './game/gameState';
 import { ShieldAlert, LogOut, Loader2, Sparkles } from 'lucide-react';
 
-interface RoundProgressData {
+interface EventProgressData {
   id: string;
-  roundNumber: number;
-  status: 'ACTIVE' | 'COMPLETED' | 'TIMED_OUT';
+  eventNumber: number;
+  status: 'ACTIVE' | 'COMPLETED' | 'EXPIRED' | 'TIMED_OUT';
   assignedQuestionId: number | null;
   completionNumber: number | null;
   score: number;
   startedAt: string;
   completedAt: string | null;
   timeRemainingMs: number;
+  submissionBlobUrl?: string | null;
+  verificationStatus?: string | null;
 }
 
 interface GameStateData {
-  activeRound: number;
-  currentTotalRounds: number;
-  teamProgress: RoundProgressData[];
+  activeEventNumber: number;
+  eventOpen: boolean;
+  eventProgress: EventProgressData[];
   totalScore: number;
 }
 
@@ -39,7 +41,7 @@ export default function App() {
 
   const [gameState, setGameState] = useState<GameStateData | null>(null);
   const [isGameLoading, setIsGameLoading] = useState(false);
-  const [round1Started, setRound1Started] = useState(false);
+  const [geoStarted, setGeoStarted] = useState(false);
 
   // Fetch full game state
   const loadGameState = useCallback(async () => {
@@ -49,10 +51,12 @@ export default function App() {
       const data = await apiFetch<GameStateData>('/api/events/state');
       setGameState(data);
 
-      // If team doesn't have an entry record for the current active round, enter it
-      const currentProgress = data.teamProgress.find((p) => p.roundNumber === data.activeRound);
+      // Auto-enter the active event if team hasn't started it yet
+      const currentProgress = data.eventProgress.find(
+        (p) => p.eventNumber === data.activeEventNumber
+      );
       if (!currentProgress) {
-        const enterRes = await apiFetch<{ progress: RoundProgressData }>('/api/events/enter', {
+        const enterRes = await apiFetch<{ progress: EventProgressData }>('/api/events/enter', {
           method: 'POST',
         });
         if (enterRes.progress) {
@@ -60,7 +64,10 @@ export default function App() {
             if (!prev) return prev;
             return {
               ...prev,
-              teamProgress: [...prev.teamProgress.filter((p) => p.roundNumber !== data.activeRound), enterRes.progress],
+              eventProgress: [
+                ...prev.eventProgress.filter((p) => p.eventNumber !== data.activeEventNumber),
+                enterRes.progress,
+              ],
             };
           });
         }
@@ -77,19 +84,21 @@ export default function App() {
       loadGameState();
     } else {
       setGameState(null);
-      setRound1Started(false);
+      setGeoStarted(false);
     }
   }, [team, loadGameState]);
 
-  // Active round progress
-  const activeRoundNumber = gameState?.activeRound || 1;
-  const currentProgress = gameState?.teamProgress.find((p) => p.roundNumber === activeRoundNumber);
+  // Active event number and current progress
+  const activeEventNumber = gameState?.activeEventNumber ?? 1;
+  const currentProgress = gameState?.eventProgress.find(
+    (p) => p.eventNumber === activeEventNumber
+  );
 
-  // Event progress records
-  const r1Progress = gameState?.teamProgress.find((p) => p.roundNumber === 1);
-  const r2Progress = gameState?.teamProgress.find((p) => p.roundNumber === 2);
-  const r3Progress = gameState?.teamProgress.find((p) => p.roundNumber === 3);
-  const r6Progress = gameState?.teamProgress.find((p) => p.roundNumber === 6);
+  // Per-event progress records
+  const r1Progress = gameState?.eventProgress.find((p) => p.eventNumber === 1);
+  const r2Progress = gameState?.eventProgress.find((p) => p.eventNumber === 2);
+  const r3Progress = gameState?.eventProgress.find((p) => p.eventNumber === 3);
+  const r6Progress = gameState?.eventProgress.find((p) => p.eventNumber === 6);
 
   // GeoGuesser completion handler (Event 2)
   const handleGeoGuesserComplete = useCallback(async () => {
@@ -211,7 +220,7 @@ export default function App() {
         {/* ======================================================== */}
         {/* EVENT 1 FLOW (Forgotten Hill) */}
         {/* ======================================================== */}
-        {activeRoundNumber === 1 && r1Progress && (
+        {activeEventNumber === 1 && r1Progress && (
           <Event1ForgottenHill
             timeRemainingMs={currentProgress?.timeRemainingMs || 30 * 60 * 1000}
             onComplete={loadGameState}
@@ -223,7 +232,7 @@ export default function App() {
         {/* ======================================================== */}
         {/* EVENT 2 FLOW (GeoGuesser) */}
         {/* ======================================================== */}
-        {activeRoundNumber === 2 && (
+        {activeEventNumber === 2 && (
           <>
             {/* If Event 2 is Finished (COMPLETED or TIMED_OUT) */}
             {r2Progress && r2Progress.status !== 'ACTIVE' ? (
@@ -287,7 +296,7 @@ export default function App() {
         {/* ======================================================== */}
         {/* EVENT 3 FLOW (The Last Broadcast) */}
         {/* ======================================================== */}
-        {activeRoundNumber === 3 && r3Progress && (
+        {activeEventNumber === 3 && r3Progress && (
           <Event3LastBroadcast
             timeRemainingMs={currentProgress?.timeRemainingMs || 30 * 60 * 1000}
             onComplete={loadGameState}
@@ -299,7 +308,7 @@ export default function App() {
         {/* ======================================================== */}
         {/* EVENT 6 FLOW (Cipher) */}
         {/* ======================================================== */}
-        {activeRoundNumber === 6 && (
+        {activeEventNumber === 6 && (
           <>
             {/* If Event 6 is Finished (COMPLETED or TIMED_OUT) -> FINAL SCREEN */}
             {r6Progress && r6Progress.status !== 'ACTIVE' ? (

@@ -46,8 +46,8 @@ export const Event1ForgottenHill: React.FC<Event1Props> = ({
       // fetch wrapper sets content-type to application/json by default. 
       // We must override it for FormData, but fetch requires it to be omitted to set boundary.
       // We'll manually do a fetch for the upload to avoid the client.ts header override
-      
-      const response = await fetch('/api/events/upload', {
+      const baseUrl = import.meta.env.VITE_API_URL || '';
+      const response = await fetch(`${baseUrl}/api/events/upload`, {
         method: 'POST',
         body: formData,
       });

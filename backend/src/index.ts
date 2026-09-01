@@ -8,19 +8,19 @@ import { eventsRouter } from './routes/events.js';
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// CORS — allow Vite dev server in development only
+// CORS — allow Vite dev server or configured frontend URL
 app.use(
   cors({
-    origin: process.env.NODE_ENV === 'production' ? false : 'http://localhost:5173',
+    origin: process.env.NODE_ENV === 'production' 
+      ? process.env.FRONTEND_URL 
+      : 'http://localhost:5173',
     credentials: true,
   })
 );
 
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 
 // Session configuration
-// NOTE: MemoryStore is fine for single-process dev/event use.
-// For multi-instance production, replace with connect-pg-simple backed by Neon.
 app.use(
   session({
     secret: process.env.SESSION_SECRET || 'prodinno-dev-secret-change-in-production',
@@ -30,7 +30,7 @@ app.use(
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       maxAge: 1000 * 60 * 60 * 24, // 24 hours
-      sameSite: 'lax',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
     },
   })
 );

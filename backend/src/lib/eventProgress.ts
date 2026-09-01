@@ -1,9 +1,12 @@
-import { Prisma, EventStatus } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { computeDeadline, hasDeadlinePassed } from './timer.js';
 import { calculatePlacementScore } from './scoring.js';
 
 // Use the Prisma transaction client type
 type TxClient = Prisma.TransactionClient;
+
+// Inline status type matching the Prisma enum
+type EventStatus = 'ACTIVE' | 'COMPLETED' | 'EXPIRED';
 
 // ---------------------------------------------------------------------------
 // getOrCreateEventProgress
