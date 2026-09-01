@@ -49,6 +49,7 @@ export const Event1ForgottenHill: React.FC<Event1Props> = ({
       // We'll manually do a fetch for the upload to avoid the client.ts header override
       const baseUrl = import.meta.env.VITE_API_URL || '';
       const response = await fetch(`${baseUrl}/api/events/upload`, {
+        credentials: 'include',
         method: 'POST',
         body: formData,
       });
