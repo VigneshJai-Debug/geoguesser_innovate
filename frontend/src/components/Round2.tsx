@@ -57,7 +57,7 @@ export const Round2: React.FC<Round2Props> = ({
         timedOut?: boolean;
       }>('/api/events/complete', {
         method: 'POST',
-        body: JSON.stringify({ eventNumber: 2, answer: answerInput }),
+        body: JSON.stringify({ eventNumber: 6, answer: answerInput }),
       });
 
       if (res.correct && res.completed) {
