@@ -14,32 +14,49 @@ type EventStatus = 'ACTIVE' | 'COMPLETED' | 'EXPIRED';
 // Creates a fresh EventProgress row only on first entry.
 // ---------------------------------------------------------------------------
 
+// Accepts either the full PrismaClient or a transaction client (both expose the same model methods)
+type AnyPrismaClient = Omit<import('@prisma/client').PrismaClient, '$connect' | '$disconnect' | '$on' | '$transaction' | '$use' | '$extends'>;
+
+// ---------------------------------------------------------------------------
+// getOrCreateEventProgress
+// Idempotent using optimistic INSERT then catch P2002.
+// This is the only safe approach on serverless Postgres (Neon):
+//   - upsert inside a transaction still races on Neon
+//   - optimistic create + unique-constraint catch is truly atomic
+// ---------------------------------------------------------------------------
+
 export async function getOrCreateEventProgress(
-  tx: TxClient,
+  client: AnyPrismaClient,
   teamId: string,
   eventNumber: number,
   extras?: { assignedQuestionId?: number }
 ) {
-  const existing = await tx.eventProgress.findUnique({
-    where: { teamId_eventNumber: { teamId, eventNumber } },
-  });
+  try {
+    const startedAt = new Date();
+    const deadlineAt = computeDeadline(startedAt);
 
-  if (existing) return existing;
-
-  const startedAt = new Date();
-  const deadlineAt = computeDeadline(startedAt);
-
-  return tx.eventProgress.create({
-    data: {
-      teamId,
-      eventNumber,
-      status: 'ACTIVE',
-      startedAt,
-      deadlineAt,
-      assignedQuestionId: extras?.assignedQuestionId ?? null,
-    },
-  });
+    return await client.eventProgress.create({
+      data: {
+        teamId,
+        eventNumber,
+        status: 'ACTIVE',
+        startedAt,
+        deadlineAt,
+        assignedQuestionId: extras?.assignedQuestionId ?? null,
+      },
+    });
+  } catch (err: any) {
+    // P2002 = unique constraint violation → record was created by a concurrent request
+    if (err?.code === 'P2002') {
+      const existing = await client.eventProgress.findUniqueOrThrow({
+        where: { teamId_eventNumber: { teamId, eventNumber } },
+      });
+      return existing;
+    }
+    throw err;
+  }
 }
+
 
 // ---------------------------------------------------------------------------
 // expireIfPastDeadline

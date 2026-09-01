@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { ArrowRight, Loader2, CheckCircle, FileText } from 'lucide-react';
+import { ArrowRight, Loader2, FileText } from 'lucide-react';
 import { apiFetch } from '../api/client';
 import { TimerBadge } from './TimerBadge';
 import { event3Questions } from '../data/event3_questions';
+import { EventWaitingScreen } from './EventWaitingScreen';
 
 interface Event3Props {
   timeRemainingMs: number;
@@ -54,17 +55,7 @@ export const Event3LastBroadcast: React.FC<Event3Props> = ({
   };
 
   if (status !== 'ACTIVE') {
-    return (
-      <div className="w-full max-w-3xl mx-auto px-4 py-8 animate-fade-in text-center">
-        <div className="neu-card p-8 rounded-3xl flex flex-col items-center">
-          <CheckCircle className="w-16 h-16 text-rose-500 mb-4" />
-          <h2 className="text-2xl font-black text-white mb-2">INVESTIGATION CONCLUDED</h2>
-          <p className="text-slate-300">
-            Your final accusation and evidence have been logged. The case is now closed.
-          </p>
-        </div>
-      </div>
-    );
+    return <EventWaitingScreen />;
   }
 
   return (
@@ -122,23 +113,39 @@ export const Event3LastBroadcast: React.FC<Event3Props> = ({
                 {q.question}
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {q.options.map((opt, optIndex) => (
-                  <button
-                    key={optIndex}
-                    type="button"
-                    onClick={() => handleOptionSelect(qIndex, optIndex)}
-                    className={`text-left p-4 rounded-xl border transition-all duration-200 ${
-                      answers[qIndex] === optIndex
-                        ? 'neu-pressed border-rose-500/50 text-white bg-rose-950/20'
-                        : 'neu-inset border-white/5 text-slate-300 hover:border-rose-500/30 hover:text-white'
-                    }`}
-                  >
-                    <span className="font-mono text-xs text-slate-500 mr-3">
-                      {String.fromCharCode(65 + optIndex)}.
-                    </span>
-                    <span className="font-medium text-sm">{opt}</span>
-                  </button>
-                ))}
+                  {q.options.map((opt, optIndex) => {
+                    const isSelected = answers[qIndex] === optIndex;
+                    return (
+                      <button
+                        key={optIndex}
+                        type="button"
+                        onClick={() => handleOptionSelect(qIndex, optIndex)}
+                        className={`text-left p-4 rounded-xl border transition-all duration-150 flex items-center gap-3 ${
+                          isSelected
+                            ? 'border-rose-500 bg-rose-500/20 text-white shadow-[0_0_0_2px_rgba(244,63,94,0.3)]'
+                            : 'neu-inset border-white/5 text-slate-300 hover:border-rose-500/30 hover:text-white'
+                        }`}
+                      >
+                        {/* Selection indicator circle / checkmark */}
+                        <span className={`flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all duration-150 ${
+                          isSelected
+                            ? 'border-rose-500 bg-rose-500'
+                            : 'border-slate-600'
+                        }`}>
+                          {isSelected && (
+                            <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 12 12" stroke="currentColor" strokeWidth={2.5}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M2 6l3 3 5-5" />
+                            </svg>
+                          )}
+                        </span>
+
+                        <span className={`font-mono text-xs mr-1 ${isSelected ? 'text-rose-400' : 'text-slate-500'}`}>
+                          {String.fromCharCode(65 + optIndex)}.
+                        </span>
+                        <span className="font-medium text-sm">{opt}</span>
+                      </button>
+                    );
+                  })}
               </div>
             </div>
           ))}

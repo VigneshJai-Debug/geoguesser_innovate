@@ -17,7 +17,7 @@ interface UseGameStateOptions {
 export function useGameState(options?: UseGameStateOptions) {
   const { assignedQuestionId, onRoundComplete } = options || {};
 
-  const [screen, setScreen] = useState<GameScreenState>('START');
+  const [screen, setScreen] = useState<GameScreenState>('PLAYING');
   const [currentRoundIndex, setCurrentRoundIndex] = useState<number>(() => {
     if (typeof assignedQuestionId === 'number' && assignedQuestionId >= 1 && assignedQuestionId <= ROUNDS_DATA.length) {
       return assignedQuestionId - 1;

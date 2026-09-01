@@ -4,13 +4,19 @@ import { put } from '@vercel/blob';
 import { Prisma } from '@prisma/client';
 import { prisma } from '../db.js';
 import { requireAuth } from '../middleware/auth.js';
-import { EVENT_2_TOTAL_QUESTIONS, EVENT_3_ANSWERS } from '../constants/game.js';
+import {
+  EVENT_2_TOTAL_QUESTIONS,
+  EVENT_3_ANSWERS,
+  EVENT_5_STAGE_ANSWERS,
+  EVENT_7_SECRET_ANSWER,
+} from '../constants/game.js';
 import { timeRemainingMs } from '../lib/timer.js';
 import {
   getOrCreateEventProgress,
   expireIfPastDeadline,
   completeEvent,
 } from '../lib/eventProgress.js';
+import { calculatePlacementScore } from '../lib/scoring.js';
 
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -33,6 +39,11 @@ eventsRouter.get('/state', async (req: Request, res: Response): Promise<void> =>
     const teamId = req.session.teamId!;
     const gameState = await getGameState();
 
+    const team = await prisma.team.findUnique({
+      where: { id: teamId },
+      include: { set: true },
+    });
+
     const progresses = await prisma.eventProgress.findMany({
       where: { teamId },
       orderBy: { eventNumber: 'asc' },
@@ -54,6 +65,15 @@ eventsRouter.get('/state', async (req: Request, res: Response): Promise<void> =>
       eventOpen: gameState.eventOpen,
       eventProgress: progressWithTimer,
       totalScore,
+      teamInfo: team
+        ? {
+            id: team.id,
+            teamName: team.teamName,
+            setId: team.setId,
+            setName: team.set?.name ?? null,
+            isSetLead: Boolean(team.set && team.set.leadTeamId === team.id),
+          }
+        : null,
     });
   } catch (err) {
     console.error('[GET /events/state]', err);
@@ -73,20 +93,19 @@ eventsRouter.post('/enter', async (req: Request, res: Response): Promise<void> =
 
     const eventNumber = gameState.activeEventNumber;
 
-    const progress = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
-      let assignedQuestionId: number | undefined;
-
-      const existing = await tx.eventProgress.findUnique({
-        where: { teamId_eventNumber: { teamId, eventNumber } },
-      });
-
-      // Event 2 is GeoGuesser
-      if (!existing && eventNumber === 2) {
-        assignedQuestionId = Math.floor(Math.random() * EVENT_2_TOTAL_QUESTIONS) + 1;
-      }
-
-      return getOrCreateEventProgress(tx, teamId, eventNumber, { assignedQuestionId });
+    // Check if already exists first so we can conditionally generate assignedQuestionId
+    const existing = await prisma.eventProgress.findUnique({
+      where: { teamId_eventNumber: { teamId, eventNumber } },
     });
+
+    // Only assign a question for Event 2 (GeoGuesser) on first entry
+    let assignedQuestionId: number | undefined;
+    if (!existing && eventNumber === 2) {
+      assignedQuestionId = Math.floor(Math.random() * EVENT_2_TOTAL_QUESTIONS) + 1;
+    }
+
+    // getOrCreateEventProgress uses optimistic create + P2002 catch — no transaction needed
+    const progress = await getOrCreateEventProgress(prisma, teamId, eventNumber, { assignedQuestionId });
 
     res.json({
       success: true,
@@ -133,8 +152,9 @@ const EVENT_6_SECRET_ANSWER = 'mrgreedy';
 eventsRouter.post('/complete', async (req: Request, res: Response): Promise<void> => {
   try {
     const teamId = req.session.teamId!;
-    const { eventNumber, answer, answers, submissionBlobUrl } = req.body as {
+    const { eventNumber, stage, answer, answers, submissionBlobUrl } = req.body as {
       eventNumber?: number;
+      stage?: number; // For event 5
       answer?: string;
       answers?: number[]; // For event 3
       submissionBlobUrl?: string; // For event 1
@@ -154,6 +174,204 @@ eventsRouter.post('/complete', async (req: Request, res: Response): Promise<void
 
     if (!gameState.eventOpen) {
       res.status(403).json({ error: 'This event is currently closed.' });
+      return;
+    }
+
+    // =========================================================================
+    // EVENT 5: THREE LOCKS (Sequential 3-stage cipher challenge)
+    // =========================================================================
+    if (eventNumber === 5) {
+      if (!stage || typeof stage !== 'number' || stage < 1 || stage > 3) {
+        res.status(400).json({ error: 'Valid stage number (1, 2, or 3) is required for Event 5.' });
+        return;
+      }
+      if (!answer || typeof answer !== 'string') {
+        res.status(400).json({ error: 'An answer is required.' });
+        return;
+      }
+
+      const progress = await prisma.eventProgress.findUnique({
+        where: { teamId_eventNumber: { teamId, eventNumber: 5 } },
+      });
+      if (!progress) {
+        res.status(400).json({ error: 'Event 5 has not been started yet.' });
+        return;
+      }
+      if (progress.status === 'EXPIRED' || progress.deadlineAt.getTime() <= Date.now()) {
+        await prisma.eventProgress.update({
+          where: { id: progress.id },
+          data: { status: 'EXPIRED', score: 0, completedAt: new Date() },
+        });
+        res.status(400).json({ success: false, timedOut: true, error: 'Time has expired for this event.' });
+        return;
+      }
+      if (progress.status === 'COMPLETED') {
+        res.json({ correct: true, completed: true, alreadyCompleted: true });
+        return;
+      }
+
+      const currentUnlockedStage = (progress.correctCount ?? 0) + 1;
+      if (stage > currentUnlockedStage) {
+        res.status(400).json({ error: `You must solve Stage ${currentUnlockedStage} first.` });
+        return;
+      }
+
+      // Check answer for this stage
+      const expectedAnswer = EVENT_5_STAGE_ANSWERS[stage as 1 | 2 | 3];
+      const normalizedAnswer = answer.trim().toLowerCase();
+
+      if (normalizedAnswer !== expectedAnswer) {
+        res.json({ correct: false, message: 'Not quite. Look again.' });
+        return;
+      }
+
+      // If Stage 1 or Stage 2: unlock next stage and persist
+      if (stage < 3) {
+        const updated = await prisma.eventProgress.update({
+          where: { id: progress.id },
+          data: { correctCount: Math.max(progress.correctCount ?? 0, stage) },
+        });
+        res.json({
+          correct: true,
+          stageCompleted: stage,
+          nextStage: stage + 1,
+          correctCount: updated.correctCount,
+          message: `Stage ${stage} unlocked!`,
+        });
+        return;
+      }
+
+      // If Stage 3: Complete the event atomically!
+      const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+        const fresh = await tx.eventProgress.findUniqueOrThrow({ where: { id: progress.id } });
+        if (fresh.status === 'EXPIRED') return { timedOut: true as const, progress: fresh };
+        return await completeEvent(tx, fresh, { correctCount: 3, totalQuestions: 3 });
+      });
+
+      if ('timedOut' in result || 'expired' in result) {
+        res.status(400).json({ success: false, timedOut: true, error: 'Time has expired for this event.' });
+        return;
+      }
+
+      res.json({
+        correct: true,
+        success: true,
+        stageCompleted: 3,
+        ...result,
+      });
+      return;
+    }
+
+    // =========================================================================
+    // EVENT 7: SET CHALLENGE (TeamSet-wide submission & scoring)
+    // =========================================================================
+    if (eventNumber === 7) {
+      if (!answer || typeof answer !== 'string') {
+        res.status(400).json({ error: 'An answer is required for Event 7.' });
+        return;
+      }
+
+      const team = await prisma.team.findUnique({
+        where: { id: teamId },
+        include: { set: true },
+      });
+
+      if (!team || !team.setId || !team.set) {
+        res.status(400).json({ error: 'Your team is not assigned to a TeamSet.' });
+        return;
+      }
+
+      if (team.set.leadTeamId !== team.id) {
+        res.status(403).json({ error: 'Only the designated Set Lead can submit the final answer for this set.' });
+        return;
+      }
+
+      const normalizedAnswer = answer.trim().toLowerCase();
+      if (normalizedAnswer !== EVENT_7_SECRET_ANSWER) {
+        res.json({ correct: false, message: 'Not quite. Try again.' });
+        return;
+      }
+
+      // Atomically score and complete Event 7 for ALL teams in this set
+      const result = await prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+        const leadProgress = await tx.eventProgress.findUnique({
+          where: { teamId_eventNumber: { teamId, eventNumber: 7 } },
+        });
+        if (!leadProgress) throw new Error('Event 7 has not been started yet.');
+        if (leadProgress.status === 'EXPIRED' || leadProgress.deadlineAt.getTime() <= Date.now()) {
+          await tx.eventProgress.update({
+            where: { id: leadProgress.id },
+            data: { status: 'EXPIRED', score: 0, completedAt: new Date() },
+          });
+          return { timedOut: true as const };
+        }
+
+        // Count how many distinct sets have already completed Event 7
+        const completedList = await tx.eventProgress.findMany({
+          where: { eventNumber: 7, status: 'COMPLETED' },
+          include: { team: true },
+        });
+        const completedSetIds = new Set(completedList.map((p) => p.team.setId).filter(Boolean));
+        const setCompletionNumber = completedSetIds.size + 1;
+        const score = calculatePlacementScore(setCompletionNumber);
+        const now = new Date();
+
+        // Find all teams belonging to this set
+        const setTeams = await tx.team.findMany({
+          where: { setId: team.setId! },
+        });
+
+        // Update or create EventProgress for every team in this set
+        for (const setTeam of setTeams) {
+          const ep = await tx.eventProgress.findUnique({
+            where: { teamId_eventNumber: { teamId: setTeam.id, eventNumber: 7 } },
+          });
+
+          if (ep) {
+            await tx.eventProgress.update({
+              where: { id: ep.id },
+              data: {
+                status: 'COMPLETED',
+                score,
+                completionNumber: setCompletionNumber,
+                completedAt: now,
+                submittedAt: now,
+              },
+            });
+          } else {
+            await tx.eventProgress.create({
+              data: {
+                teamId: setTeam.id,
+                eventNumber: 7,
+                status: 'COMPLETED',
+                score,
+                completionNumber: setCompletionNumber,
+                startedAt: leadProgress.startedAt,
+                deadlineAt: leadProgress.deadlineAt,
+                completedAt: now,
+                submittedAt: now,
+              },
+            });
+          }
+        }
+
+        return {
+          completed: true as const,
+          completionNumber: setCompletionNumber,
+          score,
+        };
+      });
+
+      if ('timedOut' in result) {
+        res.status(400).json({ success: false, timedOut: true, error: 'Time has expired for this event.' });
+        return;
+      }
+
+      res.json({
+        correct: true,
+        success: true,
+        ...result,
+      });
       return;
     }
 
@@ -234,7 +452,7 @@ eventsRouter.post('/complete', async (req: Request, res: Response): Promise<void
         if (Object.keys(updateData).length > 0) {
           const updated = await tx.eventProgress.update({
             where: { id: progress.id },
-            data: updateData
+            data: updateData,
           });
           (completeRes as any).progress = updated;
           (completeRes as any).score = updated.score;

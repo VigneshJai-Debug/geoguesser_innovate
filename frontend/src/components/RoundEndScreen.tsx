@@ -4,7 +4,7 @@ import confetti from 'canvas-confetti';
 
 interface RoundEndScreenProps {
   roundNumber: number;
-  status: 'COMPLETED' | 'TIMED_OUT';
+  status: 'COMPLETED' | 'TIMED_OUT' | 'EXPIRED';
   score: number;
   completionNumber?: number | null;
   isFinalRound?: boolean;

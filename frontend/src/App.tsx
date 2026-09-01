@@ -2,7 +2,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './context/AuthContext';
 import { apiFetch } from './api/client';
 import { LoginScreen } from './components/LoginScreen';
-import { StartScreen } from './components/StartScreen';
 import { ProgressTracker } from './components/ProgressTracker';
 import { ActiveClueImage, PreviousClues } from './components/ClueImage';
 import { GuessInput } from './components/GuessInput';
@@ -41,7 +40,6 @@ export default function App() {
 
   const [gameState, setGameState] = useState<GameStateData | null>(null);
   const [isGameLoading, setIsGameLoading] = useState(false);
-  const [geoStarted, setGeoStarted] = useState(false);
 
   // Fetch full game state
   const loadGameState = useCallback(async () => {
@@ -52,7 +50,7 @@ export default function App() {
       setGameState(data);
 
       // Auto-enter the active event if team hasn't started it yet
-      const currentProgress = data.eventProgress.find(
+      const currentProgress = (data.eventProgress || []).find(
         (p) => p.eventNumber === data.activeEventNumber
       );
       if (!currentProgress) {
@@ -62,10 +60,11 @@ export default function App() {
         if (enterRes.progress) {
           setGameState((prev) => {
             if (!prev) return prev;
+            const existingProgress = prev.eventProgress || [];
             return {
               ...prev,
               eventProgress: [
-                ...prev.eventProgress.filter((p) => p.eventNumber !== data.activeEventNumber),
+                ...existingProgress.filter((p) => p.eventNumber !== data.activeEventNumber),
                 enterRes.progress,
               ],
             };
@@ -84,21 +83,20 @@ export default function App() {
       loadGameState();
     } else {
       setGameState(null);
-      setGeoStarted(false);
     }
   }, [team, loadGameState]);
 
   // Active event number and current progress
   const activeEventNumber = gameState?.activeEventNumber ?? 1;
-  const currentProgress = gameState?.eventProgress.find(
+  const currentProgress = (gameState?.eventProgress || []).find(
     (p) => p.eventNumber === activeEventNumber
   );
 
   // Per-event progress records
-  const r1Progress = gameState?.eventProgress.find((p) => p.eventNumber === 1);
-  const r2Progress = gameState?.eventProgress.find((p) => p.eventNumber === 2);
-  const r3Progress = gameState?.eventProgress.find((p) => p.eventNumber === 3);
-  const r6Progress = gameState?.eventProgress.find((p) => p.eventNumber === 6);
+  const r1Progress = (gameState?.eventProgress || []).find((p) => p.eventNumber === 1);
+  const r2Progress = (gameState?.eventProgress || []).find((p) => p.eventNumber === 2);
+  const r3Progress = (gameState?.eventProgress || []).find((p) => p.eventNumber === 3);
+  const r6Progress = (gameState?.eventProgress || []).find((p) => p.eventNumber === 6);
 
   // GeoGuesser completion handler (Event 2)
   const handleGeoGuesserComplete = useCallback(async () => {
@@ -122,15 +120,12 @@ export default function App() {
   // Local Geography game state hook for Event 2
   const assignedQuestionId = r2Progress?.assignedQuestionId || 1;
   const {
-    screen: geoScreen,
     currentRound,
-    currentRoundNumber,
     currentStage,
     currentLevel,
     completedLevels,
     wrongMessage,
     justUnlocked,
-    startNewGame,
     submitGuess,
   } = useGameState({
     assignedQuestionId,
@@ -244,51 +239,39 @@ export default function App() {
                 isFinalRound={false}
               />
             ) : (
-              /* Round 1 is ACTIVE */
-              <>
-                {!round1Started && geoScreen === 'START' ? (
-                  <StartScreen
-                    onStart={() => {
-                      setRound1Started(true);
-                      startNewGame();
-                    }}
+              /* Event 2 is ACTIVE */
+              <div className="w-full flex flex-col items-center animate-fade-in mt-4">
+                {/* Live Countdown Timer Badge */}
+                <div className="mb-4">
+                  <TimerBadge
+                    initialTimeRemainingMs={currentProgress?.timeRemainingMs || 30 * 60 * 1000}
+                    onExpire={handleTimerExpire}
                   />
-                ) : (
-                  <div className="w-full flex flex-col items-center animate-fade-in mt-4">
-                    {/* Live Countdown Timer Badge */}
-                    <div className="mb-4">
-                      <TimerBadge
-                        initialTimeRemainingMs={currentProgress?.timeRemainingMs || 30 * 60 * 1000}
-                        onExpire={handleTimerExpire}
-                      />
-                    </div>
+                </div>
 
-                    {/* Progress Tracker */}
-                    <ProgressTracker
-                      currentStage={currentStage}
-                      completedStages={completedLevels.map((c) => ({ stage: c.stage, name: c.level.name }))}
-                      roundData={currentRound}
-                    />
+                {/* Progress Tracker */}
+                <ProgressTracker
+                  currentStage={currentStage}
+                  completedStages={completedLevels.map((c) => ({ stage: c.stage, name: c.level.name }))}
+                  roundData={currentRound}
+                />
 
-                    {/* Active Clue Image */}
-                    <ActiveClueImage currentLevel={currentLevel} />
+                {/* Active Clue Image */}
+                <ActiveClueImage currentLevel={currentLevel} />
 
-                    {/* Active Guess Input */}
-                    <GuessInput
-                      roundNumber={currentRoundNumber}
-                      stageKey={currentStage}
-                      stageLabel={currentLevel.label}
-                      placeholder={currentLevel.placeholder}
-                      onSubmitGuess={submitGuess}
-                      wrongMessage={wrongMessage}
-                      justCorrectName={justUnlocked ? justUnlocked.name : null}
-                    />
+                {/* Active Guess Input */}
+                <GuessInput
+                  stageKey={currentStage}
+                  stageLabel={currentLevel.label}
+                  placeholder={currentLevel.placeholder}
+                  onSubmitGuess={submitGuess}
+                  wrongMessage={wrongMessage}
+                  justCorrectName={justUnlocked ? justUnlocked.name : null}
+                />
 
-                    {/* Previous Clues */}
-                    <PreviousClues completedLevels={completedLevels} />
-                  </div>
-                )}
-              </>
+                {/* Previous Clues */}
+                <PreviousClues completedLevels={completedLevels} />
+              </div>
             )}
           </>
         )}

@@ -6,7 +6,7 @@ interface FinalScreenProps {
   round1Score: number;
   round2Score: number;
   totalScore: number;
-  round2Status: 'COMPLETED' | 'TIMED_OUT';
+  round2Status: 'COMPLETED' | 'TIMED_OUT' | 'EXPIRED';
 }
 
 export const FinalScreen: React.FC<FinalScreenProps> = ({

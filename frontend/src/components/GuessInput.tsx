@@ -3,7 +3,6 @@ import { StageKey } from '../data/questions';
 import { ArrowRight, Check, AlertCircle } from 'lucide-react';
 
 interface GuessInputProps {
-  roundNumber: number;
   stageKey: StageKey;
   stageLabel: string;
   placeholder: string;
@@ -13,7 +12,6 @@ interface GuessInputProps {
 }
 
 export const GuessInput: React.FC<GuessInputProps> = ({
-  roundNumber,
   stageLabel,
   placeholder,
   onSubmitGuess,
@@ -54,12 +52,7 @@ export const GuessInput: React.FC<GuessInputProps> = ({
   return (
     <div className="w-full max-w-xl mx-auto px-3 sm:px-4 mb-4">
       <div className="neu-card p-4 sm:p-7 rounded-3xl text-center">
-        {/* Stage Header */}
-        <div className="mb-1">
-          <span className="text-[11px] sm:text-xs font-black tracking-widest text-rose-400 uppercase px-3.5 py-1 rounded-full neu-pressed inline-block border border-rose-500/20">
-            ROUND {roundNumber}
-          </span>
-        </div>
+
 
         <h2 className="text-xl sm:text-3xl font-black text-white tracking-tight mt-2 mb-4 uppercase">
           GUESS THE {stageLabel.toUpperCase()}

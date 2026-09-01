@@ -1,7 +1,8 @@
 import React, { useState, useRef } from 'react';
-import { Upload, CheckCircle, Loader2, Image as ImageIcon } from 'lucide-react';
+import { Upload, Loader2, Image as ImageIcon } from 'lucide-react';
 import { apiFetch } from '../api/client';
 import { TimerBadge } from './TimerBadge';
+import { EventWaitingScreen } from './EventWaitingScreen';
 
 interface Event1Props {
   timeRemainingMs: number;
@@ -75,20 +76,7 @@ export const Event1ForgottenHill: React.FC<Event1Props> = ({
   };
 
   if (status !== 'ACTIVE') {
-    return (
-      <div className="w-full max-w-2xl mx-auto px-4 py-8 animate-fade-in text-center">
-        <div className="neu-card p-8 rounded-3xl flex flex-col items-center">
-          <CheckCircle className="w-16 h-16 text-rose-500 mb-4" />
-          <h2 className="text-2xl font-black text-white mb-2">SUBMISSION RECEIVED</h2>
-          <p className="text-slate-300">
-            Your completion screenshot has been submitted and your event submission has been recorded.
-          </p>
-          <p className="text-slate-400 mt-2 text-sm italic">
-            Manual verification may be carried out by the organizing team.
-          </p>
-        </div>
-      </div>
-    );
+    return <EventWaitingScreen />;
   }
 
   return (
