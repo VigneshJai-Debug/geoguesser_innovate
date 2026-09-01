@@ -5,6 +5,7 @@ import cors from 'cors';
 
 import { authRouter } from './routes/auth.js';
 import { eventsRouter } from './routes/events.js';
+import { adminRouter } from './routes/admin.js';
 
 const app = express();
 
@@ -60,6 +61,7 @@ app.get('/api/health', (_req, res) => {
 // Routes
 app.use('/api/auth', authRouter);
 app.use('/api/events', eventsRouter);
+app.use('/api/admin', adminRouter);
 
 // Start server
 app.listen(PORT, '0.0.0.0', () => {

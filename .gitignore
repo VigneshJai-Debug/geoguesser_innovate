@@ -19,3 +19,5 @@ backend/node_modules/.prisma
 Thumbs.db
 .vscode/
 .idea/
+
+.vercel
