@@ -141,10 +141,13 @@ eventsRouter.post('/upload', upload.single('screenshot'), async (req: Request, r
     });
 
     res.json({ url: blob.url });
-  } catch (err) {
-    console.error('[POST /events/upload]', err);
-    res.status(500).json({ error: 'Failed to upload file.' });
-  }
+  } catch (err:any) {
+    console.error('[POST /events/upload] FULL ERROR:', err);
+
+    res.status(500).json({
+      error: 'Failed to upload file.',
+      details: err?.message || String(err),
+    });
 });
 
 const EVENT_6_SECRET_ANSWER = 'mrgreedy';
