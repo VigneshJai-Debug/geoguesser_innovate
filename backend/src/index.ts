@@ -11,7 +11,11 @@ const app = express();
 
 const PORT = Number(process.env.PORT) || 3001;
 
-// CORS — localhost during development, deployed frontend in production
+// Trust Render's reverse proxy.
+// Required so secure session cookies work correctly in production.
+app.set('trust proxy', 1);
+
+// CORS
 app.use(
   cors({
     origin:
@@ -36,16 +40,12 @@ app.use(
 
     cookie: {
       httpOnly: true,
-
-      // Required for cross-site cookies between Vercel and Render
       secure: process.env.NODE_ENV === 'production',
-
-      maxAge: 1000 * 60 * 60 * 24, // 24 hours
-
       sameSite:
         process.env.NODE_ENV === 'production'
           ? 'none'
           : 'lax',
+      maxAge: 1000 * 60 * 60 * 24,
     },
   })
 );
@@ -66,8 +66,4 @@ app.use('/api/admin', adminRouter);
 // Start server
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`API Server running on port ${PORT}`);
-
-  console.log(
-    'Active event controlled via Neon SQL: GameState.activeEventNumber / eventOpen'
-  );
 });
